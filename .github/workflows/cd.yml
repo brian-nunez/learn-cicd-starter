@@ -1,7 +1,7 @@
 name: cd
 
 on:
-  pull_request:
+  push:
     branches: [main]
 
 jobs:
@@ -34,12 +34,16 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: 'Set up Cloud SDK'
+      - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 363.0.0'
 
-      - name: Deploy
+      - name: Build Image and Push
         run: |
           gcloud builds submit --tag "$ARTIFACT_REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/$ARTIFACT_REGISTRY_IMAGE_NAME:latest" .
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy $ARTIFACT_REGISTRY_IMAGE_NAME --image "$ARTIFACT_REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/$ARTIFACT_REGISTRY_IMAGE_NAME:latest" --region $ARTIFACT_REGISTRY_LOCATION --allow-unauthenticated --project $PROJECT_ID --max-instances=4
 
