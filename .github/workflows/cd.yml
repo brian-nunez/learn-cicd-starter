@@ -15,6 +15,7 @@ jobs:
       ARTIFACT_REGISTRY_LOCATION: us-central1
       ARTIFACT_REGISTRY_REPOSITORY: notely-ar-repo
       ARTIFACT_REGISTRY_IMAGE_NAME: notely
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Check out code
@@ -42,6 +43,10 @@ jobs:
       - name: Build Image and Push
         run: |
           gcloud builds submit --tag "$ARTIFACT_REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/$ARTIFACT_REGISTRY_IMAGE_NAME:latest" .
+
+      - name: Migrate Database
+        run: |
+          ./scripts/migrateup.sh
 
       - name: Deploy to Cloud Run
         run: |
