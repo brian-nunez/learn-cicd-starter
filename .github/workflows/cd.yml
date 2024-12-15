@@ -8,6 +8,13 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      PROJECT_ID: notely-444803
+      ARTIFACT_REGISTRY_LOCATION: us-central1
+      ARTIFACT_REGISTRY_REPOSITORY: notely-ar-repo
+      ARTIFACT_REGISTRY_IMAGE_NAME: notely
 
     steps:
       - name: Check out code
@@ -21,3 +28,18 @@ jobs:
       - name: Build
         run: |
           ./scripts/buildprod.sh
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+
+      - name: Deploy
+        run: |
+          gcloud builds submit --tag "$ARTIFACT_REGISTRY_LOCATION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/$ARTIFACT_REGISTRY_IMAGE_NAME:latest" .
+
